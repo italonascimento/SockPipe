@@ -66,7 +66,7 @@ export class SockPipe extends EventEmitter {
       })
   }
 
-  sendOutput(output: Observable<string | Buffer>[]) {
+  private sendOutput(output: Observable<string | Buffer>[]) {
     Observable
       .merge(...output)
       .do(o => {
