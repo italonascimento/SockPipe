@@ -10,6 +10,12 @@ Observable.prototype.route = function(route, handle) {
   )
 }
 
+Observable.prototype.write = function(stream) {
+  if (stream.write) {
+    return this.do(chunk => stream.write(chunk))
+  }
+}
+
 const server = http.createServer((req, res) => {
   res.writeHead(200, {'Content-Type': 'text/html'})
   res.end(index)
@@ -30,7 +36,10 @@ new SockPipe({
   .start()
 
 function helloRoute(msg$) {
-  return msg$.mapTo('hello response')
+  return msg$
+    .map(JSON.stringify)
+    .write(process.stdout)
+    .mapTo('hello response')
 }
 
 function hello2Route(msg$) {
