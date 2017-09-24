@@ -2,7 +2,6 @@ const http = require('http')
 const SockPipe = require('../src/sockpipe')
 const fs = require('fs')
 const index = fs.readFileSync('index.html')
-const Rx = require('rxjs')
 
 
 const server = http.createServer((req, res) => {
@@ -12,18 +11,18 @@ const server = http.createServer((req, res) => {
 server.listen(8080)
 
 
+const mapByType$ = (message$, type, response) =>
+  message$
+      .filter(message => message.type === type)
+      .mapTo(response)
+
+
 new SockPipe({
   httpServer: server,
   open: (message$) =>
     [
-      message$
-        .filter(message => message.type === 'hello')
-        .mapTo('success')
-      ,
-      message$
-        .filter(message => message.type === 'hello2')
-        .mapTo('success 2')
-      ,
+      mapByType$(message$, 'hello', 'success'),
+      mapByType$(message$, 'hello2', 'success2'),
     ]
 
 })
