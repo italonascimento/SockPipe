@@ -10,14 +10,16 @@
     "type": "git",
     "url": "git+https://github.com/italonascimento/SockPipe.git"
   },
-  "author": "Italo Nascimento, Eduardo Nuzzi",
+  "contributors": [
+    "Italo Nascimento <italo.abnascimento@gmail.com>",
+    "Eduardo Nuzzi <eduardomnuzzi@gmail.com>"
+  ],
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/italonascimento/SockPipe/issues"
   },
   "homepage": "https://github.com/italonascimento/SockPipe#readme",
   "dependencies": {
-    "lodash": "^4.17.4",
     "rx-node": "^1.0.2",
     "rxjs": "^5.4.3",
     "websocket": "^1.0.24"
