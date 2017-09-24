@@ -1,5 +1,5 @@
 const http = require('http')
-const SockPipe = require('../src/sockpipe')
+const { SockPipe } = require('../dist/sockpipe')
 const fs = require('fs')
 const index = fs.readFileSync('index.html')
 
