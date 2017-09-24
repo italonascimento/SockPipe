@@ -11,18 +11,21 @@ const server = http.createServer((req, res) => {
 })
 server.listen(8080)
 
+console.log(Rx.Node)
+
 
 new SockPipe({
   httpServer: server,
   open: (message$) =>
     [
-        message$
-            .filter(message => message.type === 'hello')
-            .mapTo('success')
-        ,
-        message$
-            .filter(message => message.type === 'hello2')
-            .mapTo('success 2')
+      message$
+        .filter(message => message.type === 'hello')
+        .mapTo('success')
+      ,
+      message$
+        .filter(message => message.type === 'hello2')
+        .mapTo('success 2')
+      ,
     ]
 
 })
