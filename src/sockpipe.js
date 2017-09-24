@@ -2,6 +2,7 @@ const WebSocketServer = require('websocket').server
 const Stream = require('./stream')
 const { EventEmitter } = require('events')
 
+
 class SockPipe extends EventEmitter {
   constructor(options) {
     super()
@@ -12,13 +13,13 @@ class SockPipe extends EventEmitter {
     this.output = new Stream()
   }
 
-  start() {
+  start(openCallback) {
     const ws = new WebSocketServer({
       httpServer: this.httpServer,
       autoAcceptConnections: false,
     })
 
-    this.emit('open', this.input, this.output)
+    openCallback(this.input, this.output)
 
     ws.on('request', (request) => {
       if (!this.isOriginAllowed(request.origin)) {
@@ -27,7 +28,7 @@ class SockPipe extends EventEmitter {
         return
       }
 
-      var connection = request.accept('echo-protocol', request.origin)
+      const connection = request.accept('echo-protocol', request.origin)
       this.emit('connect')
 
       connection.on('message', (message) => {
