@@ -37,7 +37,13 @@ class SockPipe extends EventEmitter {
 
         this.connection.on('message', (message) => {
           if (message.type === 'utf8') {
-            this._inputEvent.next(JSON.parse(message.utf8Data))
+            const inputMessage = JSON.parse(message.utf8Data)
+
+            if (this.debug) {
+              console.log('input:', inputMessage)
+            }
+
+            this._inputEvent.next(inputMessage)
           }
         })
       })
@@ -48,7 +54,7 @@ class SockPipe extends EventEmitter {
       .merge(...output)
       .do(outputs => {
         if (this.debug) {
-          console.log(outputs)
+          console.log("output:", outputs)
         }
       })
       .subscribe(a => this.connection.sendUTF(JSON.stringify(a)))
