@@ -45,13 +45,17 @@ var SockPipe = (function (_super) {
                 if (message.type === 'utf8' && message.utf8Data) {
                     _this.inputSubject.next(JSON.parse(message.utf8Data));
                 }
+                else if (message.type === 'utf8' && message.binaryData) {
+                    _this.inputSubject.next(message.binaryData);
+                }
             });
         });
     };
     SockPipe.prototype.sendOutput = function (output) {
         var _this = this;
         rxjs_1.Observable
-            .merge.apply(rxjs_1.Observable, output).subscribe(function (a) { return _this.connection.sendUTF(a); });
+            .merge.apply(rxjs_1.Observable, output).map(function (a) { return Buffer.isBuffer(a) ? a : JSON.stringify(a); })
+            .subscribe(function (a) { return _this.connection.sendUTF(a); });
     };
     return SockPipe;
 }(events_1.EventEmitter));

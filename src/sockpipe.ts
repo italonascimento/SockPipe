@@ -6,7 +6,7 @@ import * as http from 'http'
 
 export interface SockPipeConfig  {
   httpServer: http.Server,
-  open: (msg: Observable<string>) => Observable<string>[]
+  open: (msg: Observable<string | Buffer>) => Observable<string>[]
   isOriginAllowed?: (origin: string) => boolean
 }
 
@@ -14,8 +14,8 @@ export class SockPipe extends EventEmitter {
 
   private httpServer: http.Server
   private isOriginAllowed: (origin: string) => boolean = () => true
-  private inputSubject: Subject<string> = new Subject()
-  private input$: Observable<string>
+  private inputSubject: Subject<string | Buffer> = new Subject()
+  private input$: Observable<string | Buffer>
   private connection: connection
 
   constructor(options: SockPipeConfig) {
@@ -52,14 +52,17 @@ export class SockPipe extends EventEmitter {
         this.connection.on('message', (message) => {
           if (message.type === 'utf8' && message.utf8Data) {
             this.inputSubject.next(JSON.parse(message.utf8Data))
+          } else if (message.type === 'utf8' && message.binaryData) {
+            this.inputSubject.next(message.binaryData)
           }
         })
       })
   }
 
-  sendOutput(output: Observable<string>[]) {
+  sendOutput(output: Observable<string | Buffer>[]) {
     Observable
       .merge(...output)
-      .subscribe((a: string ) => this.connection.sendUTF(a))
+      .map((a: any) => Buffer.isBuffer(a) ? a : JSON.stringify(a))
+      .subscribe((a: string | Buffer ) => this.connection.sendUTF(a))
   }
 }
