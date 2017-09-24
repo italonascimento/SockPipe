@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    Hello World
+
+    <script>
+      function createSocket() {
+        const socket = new WebSocket('ws://localhost:8080', 'echo-protocol')
+        socket.onopen = function(event) {
+          socket.send('hello')
+        }
+
+        socket.onmessage = function(e) {
+          console.log(e)
+        }
+      }
+
+      window.addEventListener("load", createSocket, false)
+    </script>
+  </body>
+</html>
