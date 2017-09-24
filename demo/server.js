@@ -17,11 +17,11 @@ new SockPipe({
   open: (message$) =>
     [
         message$
-            .filter(input => input.type === 'hello')
+            .filter(message => message.type === 'hello')
             .mapTo('success')
         ,
         message$
-            .filter(input => input.type === 'hello2')
+            .filter(message => message.type === 'hello2')
             .mapTo('success 2')
     ]
 
