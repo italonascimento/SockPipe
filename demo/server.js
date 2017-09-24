@@ -11,11 +11,9 @@ server.listen(8080)
 
 new SockPipe({
   httpServer: server,
+  open: (message$) =>
+      message$
+          .filter(input => input.type === 'hello')
+          .mapTo('success')
 })
-    .start(
-        (input, output) =>
-          input
-              .filter(buffer => JSON.parse(buffer.toString()).type === 'hello')
-              .mapTo('success')
-              .send(output)
-    )
+    .start()
