@@ -15,6 +15,11 @@
               type: 'hello',
               payload: { one: 1 },
           }))
+
+          socket.send(JSON.stringify({
+              type: 'hello2',
+              payload: { two: 2 },
+          }))
         }
 
         socket.onmessage = function(e) {
