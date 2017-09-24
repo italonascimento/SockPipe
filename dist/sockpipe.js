@@ -23,6 +23,7 @@ var SockPipe = (function (_super) {
         if (options.isOriginAllowed) {
             _this.isOriginAllowed = options.isOriginAllowed;
         }
+        _this.debug = options.debug;
         _this.input$ = _this.inputSubject.asObservable();
         _this.sendOutput(options.open(_this.input$));
         return _this;
@@ -42,19 +43,25 @@ var SockPipe = (function (_super) {
             _this.connection = request.accept('echo-protocol', request.origin);
             _this.emit('connect');
             _this.connection.on('message', function (message) {
-                if (message.type === 'utf8' && message.utf8Data) {
-                    _this.inputSubject.next(JSON.parse(message.utf8Data));
+                var messageData = (message.type === 'utf8' && message.utf8Data && JSON.parse(message.utf8Data))
+                    ||
+                        (message.type === 'utf8' && message.binaryData && message.binaryData);
+                if (_this.debug) {
+                    console.log('input:', messageData);
                 }
-                else if (message.type === 'utf8' && message.binaryData) {
-                    _this.inputSubject.next(message.binaryData);
-                }
+                _this.inputSubject.next(messageData);
             });
         });
     };
     SockPipe.prototype.sendOutput = function (output) {
         var _this = this;
         rxjs_1.Observable
-            .merge.apply(rxjs_1.Observable, output).map(function (a) { return Buffer.isBuffer(a) ? a : JSON.stringify(a); })
+            .merge.apply(rxjs_1.Observable, output)["do"](function (o) {
+            if (_this.debug) {
+                console.log('output:', o);
+            }
+        })
+            .map(function (a) { return Buffer.isBuffer(a) ? a : JSON.stringify(a); })
             .subscribe(function (a) { return _this.connection.sendUTF(a); });
     };
     return SockPipe;

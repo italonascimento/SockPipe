@@ -5,9 +5,10 @@ import { IServerConfig, connection } from 'websocket'
 import * as http from 'http'
 
 export interface SockPipeConfig  {
-  httpServer: http.Server,
+  httpServer: http.Server
   open: (msg: Observable<string | Buffer>) => Observable<string>[]
   isOriginAllowed?: (origin: string) => boolean
+  debug: boolean,
 }
 
 export class SockPipe extends EventEmitter {
@@ -17,6 +18,7 @@ export class SockPipe extends EventEmitter {
   private inputSubject: Subject<string | Buffer> = new Subject()
   private input$: Observable<string | Buffer>
   private connection: connection
+  private debug: boolean
 
   constructor(options: SockPipeConfig) {
     super()
@@ -27,6 +29,7 @@ export class SockPipe extends EventEmitter {
       this.isOriginAllowed = options.isOriginAllowed
     }
 
+    this.debug = options.debug
     this.input$ = this.inputSubject.asObservable()
 
     this.sendOutput(
@@ -50,11 +53,15 @@ export class SockPipe extends EventEmitter {
         this.emit('connect')
 
         this.connection.on('message', (message) => {
-          if (message.type === 'utf8' && message.utf8Data) {
-            this.inputSubject.next(JSON.parse(message.utf8Data))
-          } else if (message.type === 'utf8' && message.binaryData) {
-            this.inputSubject.next(message.binaryData)
+          const messageData =
+            (message.type === 'utf8' && message.utf8Data && JSON.parse(message.utf8Data))
+            ||
+            (message.type === 'utf8' && message.binaryData && message.binaryData)
+
+          if (this.debug) {
+            console.log('input:', messageData)
           }
+          this.inputSubject.next(messageData)
         })
       })
   }
@@ -62,6 +69,11 @@ export class SockPipe extends EventEmitter {
   sendOutput(output: Observable<string | Buffer>[]) {
     Observable
       .merge(...output)
+      .do(o => {
+        if (this.debug) {
+          console.log('output:', o)
+        }
+      })
       .map((a: any) => Buffer.isBuffer(a) ? a : JSON.stringify(a))
       .subscribe((a: string | Buffer ) => this.connection.sendUTF(a))
   }
