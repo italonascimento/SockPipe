@@ -14,12 +14,12 @@ server.listen(8080)
 const mapByType$ = (message$, type, response) =>
   message$
     .filter(message => message.type === type)
-    .mapTo(response)
-
-const mapToPayload$ = (message$) =>
-  message$
-    .filter(message => message.type === 'payload')
-    .map(message => message.payload)
+    .map(message => {
+        return {
+            type: message.type,
+            payload: response,
+        }
+    })
 
 const mapAll$ = (message$) =>
   message$
@@ -28,11 +28,11 @@ const mapAll$ = (message$) =>
 
 new SockPipe({
   httpServer: server,
+  debug: true,
   open: (message$) =>
     [
-      mapByType$(message$, 'hello', 'success'),
-      mapByType$(message$, 'hello2', 'success2'),
-      mapToPayload$(message$),
+      mapByType$(message$, 'hello', {msg: 'success'}),
+      mapByType$(message$, 'hello2', {msg: 'success2'}),
       mapAll$(message$),
     ]
 

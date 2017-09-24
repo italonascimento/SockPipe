@@ -10,6 +10,7 @@ class SockPipe extends EventEmitter {
 
     this.httpServer = options.httpServer
     this.isOriginAllowed = options.isOriginAllowed || (() => true)
+    this.debug = options.debug || false
 
     this._inputEvent = new Rx.Subject()
     this.input = this._inputEvent.asObservable()
@@ -45,6 +46,11 @@ class SockPipe extends EventEmitter {
   sendOutput(output) {
     Rx.Observable
       .merge(...output)
+      .do(outputs => {
+        if (this.debug) {
+          console.log(outputs)
+        }
+      })
       .subscribe(a => this.connection.sendUTF(JSON.stringify(a)))
   }
 }
