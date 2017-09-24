@@ -11,7 +11,10 @@
       function createSocket() {
         const socket = new WebSocket('ws://localhost:8080', 'echo-protocol')
         socket.onopen = function(event) {
-          socket.send('hello')
+          socket.send(JSON.stringify({
+              type: 'hello',
+              payload: { one: 1 },
+          }))
         }
 
         socket.onmessage = function(e) {

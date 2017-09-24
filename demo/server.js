@@ -9,15 +9,13 @@ const server = http.createServer((req, res) => {
 })
 server.listen(8080)
 
-const sockpipe = new SockPipe({
+new SockPipe({
   httpServer: server,
 })
-
-sockpipe.on('open', (input, output) => {
-  input
-    .send(process.stdout)
-    .mapTo('success')
-    .send(output)
-})
-
-sockpipe.start()
+    .start(
+        (input, output) =>
+          input
+              .filter(buffer => JSON.parse(buffer.toString()).type === 'hello')
+              .mapTo('success')
+              .send(output)
+    )
