@@ -11,8 +11,6 @@ const server = http.createServer((req, res) => {
 })
 server.listen(8080)
 
-console.log(Rx.Node)
-
 
 new SockPipe({
   httpServer: server,
