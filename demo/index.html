@@ -13,17 +13,20 @@
         socket.onopen = function(event) {
           socket.send(JSON.stringify({
               type: 'hello',
-              payload: { one: 1 },
           }))
 
           socket.send(JSON.stringify({
               type: 'hello2',
+          }))
+
+          socket.send(JSON.stringify({
+              type: 'payload',
               payload: { two: 2 },
           }))
         }
 
         socket.onmessage = function(e) {
-          console.log(e)
+          console.log(JSON.parse(e.data))
         }
       }
 

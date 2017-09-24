@@ -45,7 +45,7 @@ class SockPipe extends EventEmitter {
   sendOutput(output) {
     Rx.Observable
       .merge(...output)
-      .subscribe(a => this.connection.sendUTF(a))
+      .subscribe(a => this.connection.sendUTF(JSON.stringify(a)))
   }
 }
 
