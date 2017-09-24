@@ -15,7 +15,7 @@ class SockPipe extends EventEmitter {
     this.input = this._inputEvent.asObservable()
 
     this.sendOutput(
-        options.open(this.input)
+      options.open(this.input)
     )
   }
 
