@@ -18,11 +18,6 @@
           socket.send(JSON.stringify({
               type: 'hello2',
           }))
-
-          socket.send(JSON.stringify({
-              type: 'payload',
-              payload: { two: 2 },
-          }))
         }
 
         socket.onmessage = function(e) {
