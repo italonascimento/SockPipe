@@ -18,6 +18,7 @@ export class SockPipe extends EventEmitter {
   private input$: Observable<string | Buffer>
   private connection: connection
   private debug: boolean
+  private open: (msg: Observable<string | Buffer>) => Observable<string>[]
 
   constructor(options: SockPipeConfig) {
     super()
