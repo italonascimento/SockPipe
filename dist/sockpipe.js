@@ -1,70 +1,57 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-exports.__esModule = true;
-var websocket_1 = require("websocket");
-var events_1 = require("events");
-var rxjs_1 = require("rxjs");
-var SockPipe = (function (_super) {
-    __extends(SockPipe, _super);
-    function SockPipe(options) {
-        var _this = _super.call(this) || this;
-        _this.isOriginAllowed = function () { return true; };
-        _this.inputSubject = new rxjs_1.Subject();
-        _this.httpServer = options.httpServer;
+Object.defineProperty(exports, "__esModule", { value: true });
+const websocket_1 = require("websocket");
+const events_1 = require("events");
+const rxjs_1 = require("rxjs");
+class SockPipe extends events_1.EventEmitter {
+    constructor(options) {
+        super();
+        this.isOriginAllowed = () => true;
+        this.inputSubject = new rxjs_1.Subject();
+        this.httpServer = options.httpServer;
         if (options.isOriginAllowed) {
-            _this.isOriginAllowed = options.isOriginAllowed;
+            this.isOriginAllowed = options.isOriginAllowed;
         }
-        _this.debug = options.debug;
-        _this.input$ = _this.inputSubject.asObservable();
-        _this.sendOutput(options.open(_this.input$));
-        return _this;
+        this.debug = options.debug;
+        this.input$ = this.inputSubject.asObservable();
+        this.sendOutput(options.open(this.input$));
     }
-    SockPipe.prototype.start = function () {
-        var _this = this;
+    start() {
         new websocket_1.server({
             httpServer: this.httpServer,
-            autoAcceptConnections: false
+            autoAcceptConnections: false,
         })
-            .on('request', function (request) {
-            if (!_this.isOriginAllowed(request.origin)) {
+            .on('request', (request) => {
+            if (!this.isOriginAllowed(request.origin)) {
                 request.reject();
-                _this.emit('error', { message: "Origin not allowed: " + request.origin });
+                this.emit('error', { message: `Origin not allowed: ${request.origin}` });
                 return;
             }
-            _this.connection = request.accept('echo-protocol', request.origin);
-            _this.emit('connect');
-            _this.connection.on('message', function (message) {
-                var messageData = (message.type === 'utf8' && message.utf8Data && JSON.parse(message.utf8Data))
+            this.connection = request.accept('echo-protocol', request.origin);
+            this.emit('connect');
+            this.connection.on('message', (message) => {
+                const messageData = (message.type === 'utf8' && message.utf8Data && JSON.parse(message.utf8Data))
                     ||
                         (message.type === 'utf8' && message.binaryData && message.binaryData);
-                if (_this.debug) {
+                if (this.debug) {
                     console.log('input:', messageData);
                 }
-                _this.inputSubject.next(messageData);
+                this.inputSubject.next(messageData);
             });
         });
-    };
-    SockPipe.prototype.sendOutput = function (output) {
-        var _this = this;
+    }
+    sendOutput(output) {
         rxjs_1.Observable
-            .merge.apply(rxjs_1.Observable, output)["do"](function (o) {
-            if (_this.debug) {
+            .merge(...output)
+            .do((o) => {
+            if (this.debug) {
                 console.log('output:', o);
             }
         })
-            .map(function (a) { return Buffer.isBuffer(a) ? a : JSON.stringify(a); })
-            .subscribe(function (a) { return _this.connection.sendUTF(a); });
-    };
-    return SockPipe;
-}(events_1.EventEmitter));
+            .subscribe((a) => Buffer.isBuffer(a)
+            ? this.connection.sendBytes(a)
+            : this.connection.sendUTF(JSON.stringify(a)));
+    }
+}
 exports.SockPipe = SockPipe;
 //# sourceMappingURL=sockpipe.js.map

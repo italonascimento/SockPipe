@@ -1,7 +1,6 @@
-import { server as WebSocketServer } from 'websocket'
+import { server as WebSocketServer, IServerConfig, connection } from 'websocket'
 import { EventEmitter } from 'events'
 import { Subject, Observable } from 'rxjs'
-import { IServerConfig, connection } from 'websocket'
 import * as http from 'http'
 
 export interface SockPipeConfig  {
@@ -66,15 +65,18 @@ export class SockPipe extends EventEmitter {
       })
   }
 
-  private sendOutput(output: Observable<string | Buffer>[]) {
+  private sendOutput(output: Observable<any>[]) {
     Observable
       .merge(...output)
-      .do(o => {
+      .do((o: any) => {
         if (this.debug) {
           console.log('output:', o)
         }
       })
-      .map((a: any) => Buffer.isBuffer(a) ? a : JSON.stringify(a))
-      .subscribe((a: string | Buffer ) => this.connection.sendUTF(a))
+      .subscribe((a: any ) =>
+        Buffer.isBuffer(a)
+          ? this.connection.sendBytes(a)
+          : this.connection.sendUTF(JSON.stringify(a))
+        )
   }
 }

@@ -4,16 +4,18 @@ const fs = require('fs')
 const index = fs.readFileSync('index.html')
 const { Observable } = require('rxjs')
 
-Observable.prototype.route = function(route, handle) {
+const route = function(msg$, route, handle) {
   return handle(
-    this.filter(msg => msg.type === route)
+    msg$.filter(msg => msg.type === route)
   )
 }
 
-Observable.prototype.write = function(stream) {
+const write = function(msg$, stream) {
   if (stream.write) {
-    return this.do(chunk => stream.write(chunk))
+    return msg$.do(chunk => stream.write(chunk))
   }
+
+  return msg$
 }
 
 const server = http.createServer((req, res) => {
@@ -25,23 +27,18 @@ server.listen(8080)
 new SockPipe({
   httpServer: server,
   debug: true,
-  open: (message$) =>
+  open: (msg$) =>
     [
-      message$.route('hello', helloRoute),
-      message$.route('hello2', hello2Route),
-      message$.mapTo('success')
+      route(msg$, 'query', queryHandler),
+      route(msg$, 'mutation', mutationHandle),
     ]
-
 })
   .start()
 
-function helloRoute(msg$) {
+function queryHandler(msg$) {
   return msg$
-    .map(JSON.stringify)
-    .write(process.stdout)
-    .mapTo('hello response')
 }
 
-function hello2Route(msg$) {
-  return msg$.mapTo('hello2 response')
+function mutationHandle(msg$) {
+  return msg$
 }
