@@ -2,7 +2,8 @@ const http = require('http')
 const { SockPipe } = require('../../dist/sockpipe')
 const fs = require('fs')
 const index = fs.readFileSync('index.html')
-const { Observable } = require('rxjs')
+const index2 = fs.readFileSync('index2.html')
+const { Observable, Subject } = require('rxjs')
 const { graphql, buildSchema } = require('graphql')
 
 const users = [
@@ -35,14 +36,19 @@ const root = {
 
 const server = http.createServer((req, res) => {
   res.writeHead(200, {'Content-Type': 'text/html'})
-  res.end(index)
+
+  if (req.url === '/one') {
+    res.end(index)
+  } else if (req.url === '/two') {
+    res.end(index2)
+  }
 })
 server.listen(8080)
 
 new SockPipe({
   httpServer: server,
-  debug: true,
-  open: (msg$) =>
+  debug: false,
+  resolver: (msg$) =>
     [
       route(msg$, 'query', queryHandler),
       route(msg$, 'mutation', mutationHandle),
@@ -68,14 +74,25 @@ function mutationHandle(msg$) {
   return msg$
 }
 
+const fakeEvent = new Subject()
+
+let i = 0
+const interval = setInterval(() => {
+  if (i == 9) {
+    clearInterval(interval)
+  }
+
+  fakeEvent.next()
+  i += 1
+}, 1000)
+
 function subscribeHandle(msg$) {
-  return msg$
-    .combineLatest(
-      Observable.interval(2000),
-      (msg) => msg
+  return fakeEvent
+    .withLatestFrom(
+      msg$,
+      (_, msg) => msg
     )
     .switchMap(resolveQuery)
-    .take(5)
 }
 
 function resolveQuery(query) {

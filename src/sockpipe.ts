@@ -1,40 +1,94 @@
-import { server as WebSocketServer, IServerConfig, connection } from 'websocket'
+import { server as WebSocketServer, IServerConfig, connection, IMessage } from 'websocket'
 import { EventEmitter } from 'events'
-import { Subject, Observable } from 'rxjs'
+import { Subject, Observable, Subscription } from 'rxjs'
 import * as http from 'http'
+
+type Resolver = (msg: Observable<string | Buffer>) => Observable<string>[]
 
 export interface SockPipeConfig  {
   httpServer: http.Server
-  open: (msg: Observable<string | Buffer>) => Observable<string>[]
+  resolver: Resolver
   isOriginAllowed?: (origin: string) => boolean
-  debug: boolean,
+  debug?: boolean
+}
+
+export interface ConnectionConfig {
+  debug?: boolean
+  socket: connection
+  resolver: Resolver
+}
+
+export class Connection {
+
+  private inputSubject: Subject<string | Buffer>
+  private input$: Observable<string | Buffer>
+  private socket: connection
+  private debug: boolean
+  private subscription: Subscription
+
+  constructor(config: ConnectionConfig) {
+    this.inputSubject = new Subject()
+    this.input$ = this.inputSubject.asObservable()
+    this.debug = Boolean(config.debug)
+    this.socket = config.socket
+
+    this.socket.on('message', this.handleMessage.bind(this))
+    this.socket.on('close', this.destroy.bind(this))
+
+    this.sendOutput(config.resolver(this.input$))
+  }
+
+  private handleMessage(message: IMessage) {
+    const messageData =
+      (message.type === 'utf8' && message.utf8Data && JSON.parse(message.utf8Data))
+      ||
+      (message.type === 'binary' && message.binaryData && message.binaryData)
+
+    if (this.debug) {
+      console.log('input:', messageData)
+    }
+
+    this.inputSubject.next(messageData)
+  }
+
+  private sendOutput(output: Observable<any>[]) {
+    this.subscription = Observable
+      .merge(...output)
+      .do((o: any) => {
+        if (this.debug) {
+          console.log('output:', o)
+        }
+      })
+      .subscribe((a: any ) =>
+        Buffer.isBuffer(a)
+          ? this.socket.sendBytes(a)
+          : this.socket.sendUTF(JSON.stringify(a))
+      )
+  }
+
+  private destroy() {
+    this.subscription.unsubscribe()
+  }
 }
 
 export class SockPipe extends EventEmitter {
 
   private httpServer: http.Server
   private isOriginAllowed: (origin: string) => boolean = () => true
-  private inputSubject: Subject<string | Buffer> = new Subject()
-  private input$: Observable<string | Buffer>
-  private connection: connection
   private debug: boolean
-  private open: (msg: Observable<string | Buffer>) => Observable<string>[]
+  private resolver: Resolver
 
-  constructor(options: SockPipeConfig) {
+  constructor(config: SockPipeConfig) {
     super()
 
-    this.httpServer = options.httpServer
+    this.httpServer = config.httpServer
 
-    if (options.isOriginAllowed) {
-      this.isOriginAllowed = options.isOriginAllowed
+    if (config.isOriginAllowed) {
+      this.isOriginAllowed = config.isOriginAllowed
     }
 
-    this.debug = options.debug
-    this.input$ = this.inputSubject.asObservable()
-
-    this.sendOutput(
-      options.open(this.input$)
-    )
+    this.debug = Boolean(config.debug)
+    this.resolver = config.resolver
   }
 
   start() {
@@ -49,35 +103,13 @@ export class SockPipe extends EventEmitter {
           return
         }
 
-        this.connection = request.accept('echo-protocol', request.origin)
-        this.emit('connect')
-
-        this.connection.on('message', (message) => {
-          const messageData =
-            (message.type === 'utf8' && message.utf8Data && JSON.parse(message.utf8Data))
-            ||
-            (message.type === 'utf8' && message.binaryData && message.binaryData)
-
-          if (this.debug) {
-            console.log('input:', messageData)
-          }
-          this.inputSubject.next(messageData)
+        const connection = new Connection({
+          socket: request.accept('echo-protocol', request.origin),
+          resolver: this.resolver,
+          debug: this.debug,
         })
-      })
-  }
 
-  private sendOutput(output: Observable<any>[]) {
-    Observable
-      .merge(...output)
-      .do((o: any) => {
-        if (this.debug) {
-          console.log('output:', o)
-        }
+        this.emit('connect')
       })
-      .subscribe((a: any ) =>
-        Buffer.isBuffer(a)
-          ? this.connection.sendBytes(a)
-          : this.connection.sendUTF(JSON.stringify(a))
-        )
   }
 }
