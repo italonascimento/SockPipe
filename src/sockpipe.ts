@@ -7,7 +7,6 @@ type Resolver = (msg: Observable<string | Buffer>) => Observable<string>[]
 
 export interface SockPipeConfig  {
   httpServer: http.Server
-  resolver: Resolver
   isOriginAllowed?: (origin: string) => boolean
   debug?: boolean
 }
@@ -15,101 +14,70 @@ export interface SockPipeConfig  {
 export interface ConnectionConfig {
   debug?: boolean
   socket: connection
-  resolver: Resolver
+  resolve: Resolver
 }
 
-export class Connection {
+export function sockpipe(config: SockPipeConfig, resolve: Resolver): EventEmitter {
+  const {
+    httpServer,
+    isOriginAllowed = () => true,
+    debug = false,
+  } = config
 
-  private inputSubject: Subject<string | Buffer>
-  private input$: Observable<string | Buffer>
-  private socket: connection
-  private debug: boolean
-  private subscription: Subscription
+  const emitter = new EventEmitter()
 
-  constructor(config: ConnectionConfig) {
-    this.inputSubject = new Subject()
-    this.input$ = this.inputSubject.asObservable()
-    this.debug = Boolean(config.debug)
-    this.socket = config.socket
+  const webSocketServer = new WebSocketServer({
+    httpServer: httpServer,
+    autoAcceptConnections: false,
+  })
+    .on('request', request => {
+      if (!isOriginAllowed(request.origin)) {
+        request.reject()
+        return
+      }
 
-    this.socket.on('message', this.handleMessage.bind(this))
-    this.socket.on('close', this.destroy.bind(this))
+      createConnection({
+        socket: request.accept('echo-protocol', request.origin),
+        resolve,
+        debug,
+      })
+    })
 
-    this.sendOutput(config.resolver(this.input$))
-  }
+  return emitter
+}
 
-  private handleMessage(message: IMessage) {
+function createConnection(config: ConnectionConfig){
+  const { socket, resolve, debug = false } = config
+
+  const inputSubject: Subject<string | Buffer> = new Subject()
+  const input$ = inputSubject.asObservable()
+  const output = resolve(input$)
+
+  const subscription = Observable
+    .merge(...output)
+    .do((o: any) => {
+      if (debug) {
+        console.log('output:', o)
+      }
+    })
+    .subscribe((a: any ) =>
+      Buffer.isBuffer(a)
+        ? socket.sendBytes(a)
+        : socket.sendUTF(JSON.stringify(a))
+    )
+
+  socket.on('message', (message: IMessage) => {
     const messageData =
       (message.type === 'utf8' && message.utf8Data && JSON.parse(message.utf8Data))
       ||
       (message.type === 'binary' && message.binaryData && message.binaryData)
 
-    if (this.debug) {
+    if (debug) {
       console.log('input:', messageData)
     }
 
-    this.inputSubject.next(messageData)
-  }
+    inputSubject.next(messageData)
+  })
 
-  private sendOutput(output: Observable<any>[]) {
-    this.subscription = Observable
-      .merge(...output)
-      .do((o: any) => {
-        if (this.debug) {
-          console.log('output:', o)
-        }
-      })
-      .subscribe((a: any ) =>
-        Buffer.isBuffer(a)
-          ? this.socket.sendBytes(a)
-          : this.socket.sendUTF(JSON.stringify(a))
-      )
-  }
-
-  private destroy() {
-    this.subscription.unsubscribe()
-  }
-}
-
-export class SockPipe extends EventEmitter {
-
-  private httpServer: http.Server
-  private isOriginAllowed: (origin: string) => boolean = () => true
-  private debug: boolean
-  private resolver: Resolver
-
-  constructor(config: SockPipeConfig) {
-    super()
-
-    this.httpServer = config.httpServer
-
-    if (config.isOriginAllowed) {
-      this.isOriginAllowed = config.isOriginAllowed
-    }
-
-    this.debug = Boolean(config.debug)
-    this.resolver = config.resolver
-  }
-
-  start() {
-    new WebSocketServer({
-      httpServer: this.httpServer,
-      autoAcceptConnections: false,
-    })
-      .on('request', (request) => {
-        if (!this.isOriginAllowed(request.origin)) {
-          request.reject()
-          this.emit('error', { message: `Origin not allowed: ${request.origin}` })
-          return
-        }
-
-        const connection = new Connection({
-          socket: request.accept('echo-protocol', request.origin),
-          resolver: this.resolver,
-          debug: this.debug,
-        })
-
-        this.emit('connect')
-      })
-  }
+  socket.on('close', () => subscription.unsubscribe())
 }

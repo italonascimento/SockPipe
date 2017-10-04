@@ -1,5 +1,5 @@
 const http = require('http')
-const { SockPipe } = require('../../dist/sockpipe')
+const { sockpipe } = require('../../dist/sockpipe')
 const fs = require('fs')
 const index = fs.readFileSync('index.html')
 const index2 = fs.readFileSync('index2.html')
@@ -45,17 +45,17 @@ const server = http.createServer((req, res) => {
 })
 server.listen(8080)
 
-new SockPipe({
-  httpServer: server,
-  debug: false,
-  resolver: (msg$) =>
+sockpipe({
+    httpServer: server,
+    debug: false
+  },
+  (msg$) =>
     [
       route(msg$, 'query', queryHandler),
       route(msg$, 'mutation', mutationHandle),
       route(msg$, 'subscribe', subscribeHandle)
     ]
-})
-  .start()
+  )
 
 function route(msg$, route, handle) {
   return handle(
