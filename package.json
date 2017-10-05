@@ -27,8 +27,9 @@
     "websocket": "^1.0.24"
   },
   "devDependencies": {
-    "@types/websocket": "0.0.34",
     "@types/node": "^8.0.31",
+    "@types/request": "^2.0.3",
+    "@types/websocket": "0.0.34",
     "@types/ws": "^3.0.2",
     "node-dev": "^3.1.3"
   }
