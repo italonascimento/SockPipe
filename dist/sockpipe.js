@@ -13,14 +13,17 @@ function sockpipe(config, resolve) {
         .on('request', request => {
         if (!isOriginAllowed(request.origin)) {
             request.reject();
+            emitter.emit('error', { message: `Origin not allowed: ${request.origin}` });
             return;
         }
-        createConnection({
+        const connection = createConnection({
             socket: request.accept('echo-protocol', request.origin),
             resolve,
             debug,
         });
-    });
+    })
+        .on('connect', () => emitter.emit('connect'))
+        .on('close', () => emitter.emit('close'));
     return emitter;
 }
 exports.sockpipe = sockpipe;

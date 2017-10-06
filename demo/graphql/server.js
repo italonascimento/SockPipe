@@ -1,61 +1,48 @@
 const http = require('http')
-const { sockpipe } = require('../../dist/sockpipe')
 const fs = require('fs')
-const index = fs.readFileSync('index.html')
-const index2 = fs.readFileSync('index2.html')
-const { Observable, Subject } = require('rxjs')
-const { graphql, buildSchema } = require('graphql')
+const path = require('path')
+const { Subject } = require('rxjs')
+const { sockpipe } = require('../../dist/sockpipe')
+const {
+  queryHandler,
+  mutationHandler,
+  subscribeHandler
+} = require('./message-handlers.js')
 
-const users = [
-  {
-    name: 'John',
-    age: 27
-  },
-  {
-    name: 'Joane',
-    age: 28
-  }
-]
-
-const schema = buildSchema(`
-  type User {
-    name: String
-    age: Int
-  }
-
-  type Query {
-    users: [User]
-    user(n: Int!): User
-  }
-`);
-
-const root = {
-  users: () => users,
-  user: ({ n }) => users[n]
-}
+const index = fs.readFileSync(path.join(__dirname, 'index.html'))
 
 const server = http.createServer((req, res) => {
   res.writeHead(200, {'Content-Type': 'text/html'})
-
-  if (req.url === '/one') {
-    res.end(index)
-  } else if (req.url === '/two') {
-    res.end(index2)
-  }
+  res.end(index)
 })
-server.listen(8080)
+  .listen(8080)
 
-sockpipe({
+
+const sockpipeServer = sockpipe({
     httpServer: server,
     debug: false
   },
-  (msg$) =>
-    [
+  (msg$) => {
+    const fakeEvent$ = new Subject()
+
+    let i = 0
+    const interval = setInterval(() => {
+      if (i == 9) {
+        clearInterval(interval)
+      }
+      fakeEvent$.next()
+      i += 1
+    }, 1000)
+
+    return [
       route(msg$, 'query', queryHandler),
-      route(msg$, 'mutation', mutationHandle),
-      route(msg$, 'subscribe', subscribeHandle)
+      route(msg$, 'mutation', mutationHandler),
+      route(msg$, 'subscribe', subscribeHandler(fakeEvent$))
     ]
-  )
+  })
+  .on('connect', () => console.log('[SockPipe] A client has connected'))
+  .on('close', () => console.log('[SockPipe] A client has left'))
+
 
 function route(msg$, route, handle) {
   return handle(
@@ -63,38 +50,4 @@ function route(msg$, route, handle) {
     .filter(msg => msg.type === route)
     .map(msg => msg.data)
   )
-}
-
-function queryHandler(msg$) {
-  return msg$
-    .switchMap(resolveQuery)
-}
-
-function mutationHandle(msg$) {
-  return msg$
-}
-
-const fakeEvent = new Subject()
-
-let i = 0
-const interval = setInterval(() => {
-  if (i == 9) {
-    clearInterval(interval)
-  }
-
-  fakeEvent.next()
-  i += 1
-}, 1000)
-
-function subscribeHandle(msg$) {
-  return fakeEvent
-    .withLatestFrom(
-      msg$,
-      (_, msg) => msg
-    )
-    .switchMap(resolveQuery)
-}
-
-function resolveQuery(query) {
-  return Observable.fromPromise(graphql(schema, query, root))
 }
