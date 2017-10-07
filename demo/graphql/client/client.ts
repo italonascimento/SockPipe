@@ -3,11 +3,11 @@ function createSocket() {
   socket.onopen = function(event) {
     socket.send(JSON.stringify({
       type: 'accept',
-      data: ['query']
+      data: ['graphql']
     }))
 
     socket.send(JSON.stringify({
-      type: 'query',
+      type: 'graphql',
       data: `{
         user(n: 1) {
           name
