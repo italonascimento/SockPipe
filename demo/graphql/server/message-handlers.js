@@ -7,17 +7,13 @@ function resolveQuery(query) {
 }
 
 module.exports = {
-  queryHandler(msg$) {
+  graphQLHandler(msg$) {
     return msg$
-    .switchMap(resolveQuery)
-    .map(res => ({
-      type: 'query',
-      data: res
-    }))
-  },
-
-  mutationHandler(msg$) {
-    return msg$
+      .switchMap(resolveQuery)
+      .map(res => ({
+        type: 'graphql',
+        data: res.data
+      }))
   },
 
   subscribeHandler(updateStream$) {
@@ -30,7 +26,7 @@ module.exports = {
         .switchMap(resolveQuery)
         .map(res => ({
           type: 'subscribe',
-          data: res
+          data: res.data
         }))
   },
 }
