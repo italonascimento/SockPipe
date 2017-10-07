@@ -3,7 +3,7 @@ import { EventEmitter } from 'events'
 import { Subject, Observable, Subscription } from 'rxjs'
 import * as http from 'http'
 
-type Resolver = (msg: Observable<string | Buffer>) => Observable<string>[]
+type Resolver = (msg: Observable<string | Buffer>) => Observable<any>[]
 
 export interface SockPipeConfig  {
   httpServer: http.Server
@@ -55,17 +55,19 @@ function createConnection(config: ConnectionConfig){
   const inputSubject: Subject<string | Buffer> = new Subject()
   const input$ = inputSubject.asObservable()
   const output = resolve(input$)
+  const accept: string[] = []
 
   const subscription = Observable
     .merge(...output)
+    .filter(msg => msg.type && accept.includes(msg.type))
     .do((o: any) => {
       if (debug) {
         console.log('output:', o)
       }
     })
     .subscribe((a: any ) =>
-      Buffer.isBuffer(a)
-        ? socket.sendBytes(a)
+      Buffer.isBuffer(a.data)
+        ? socket.sendBytes(a.data)
         : socket.sendUTF(JSON.stringify(a))
     )
 
@@ -79,7 +81,13 @@ function createConnection(config: ConnectionConfig){
       console.log('input:', messageData)
     }
 
-    inputSubject.next(messageData)
+    if (messageData.type && messageData.type === 'accept') {
+      if (messageData.data && Array.isArray(messageData.data)) {
+        messageData.data.forEach((value: any) => accept.push(value.toString()))
+      }
+    } else {
+      inputSubject.next(messageData)
+    }
   })
 
   socket.on('close', () => subscription.unsubscribe())

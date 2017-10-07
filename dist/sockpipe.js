@@ -32,15 +32,17 @@ function createConnection(config) {
     const inputSubject = new rxjs_1.Subject();
     const input$ = inputSubject.asObservable();
     const output = resolve(input$);
+    const accept = [];
     const subscription = rxjs_1.Observable
         .merge(...output)
+        .filter(msg => msg.type && accept.includes(msg.type))
         .do((o) => {
         if (debug) {
             console.log('output:', o);
         }
     })
-        .subscribe((a) => Buffer.isBuffer(a)
-        ? socket.sendBytes(a)
+        .subscribe((a) => Buffer.isBuffer(a.data)
+        ? socket.sendBytes(a.data)
         : socket.sendUTF(JSON.stringify(a)));
     socket.on('message', (message) => {
         const messageData = (message.type === 'utf8' && message.utf8Data && JSON.parse(message.utf8Data))
@@ -49,7 +51,14 @@ function createConnection(config) {
         if (debug) {
             console.log('input:', messageData);
         }
-        inputSubject.next(messageData);
+        if (messageData.type && messageData.type === 'accept') {
+            if (messageData.data && Array.isArray(messageData.data)) {
+                messageData.data.forEach((value) => accept.push(value.toString()));
+            }
+        }
+        else {
+            inputSubject.next(messageData);
+        }
     });
     socket.on('close', () => subscription.unsubscribe());
 }
