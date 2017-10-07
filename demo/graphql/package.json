@@ -1,0 +1,22 @@
+{
+  "name": "sockpipe-graphql-demo",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "author": "Ítalo Nascimento",
+  "license": "MIT",
+  "devDependencies": {
+    "html-webpack-plugin": "^2.30.1",
+    "ts-loader": "^2.3.7",
+    "webpack": "^3.6.0",
+    "websocket": "^1.0.24"
+  },
+  "dependencies": {
+    "finalhandler": "^1.1.0",
+    "serve-static": "^1.13.1"
+  }
+}

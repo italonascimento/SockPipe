@@ -10,6 +10,10 @@ module.exports = {
   queryHandler(msg$) {
     return msg$
     .switchMap(resolveQuery)
+    .map(res => ({
+      type: 'query',
+      data: res
+    }))
   },
 
   mutationHandler(msg$) {
@@ -24,5 +28,9 @@ module.exports = {
           (_, msg) => msg
         )
         .switchMap(resolveQuery)
+        .map(res => ({
+          type: 'subscribe',
+          data: res
+        }))
   },
 }
