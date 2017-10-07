@@ -6,8 +6,7 @@ const serveStatic = require('serve-static')
 const finalhandler = require('finalhandler')
 const { sockpipe } = require('../../../dist/sockpipe')
 const {
-  queryHandler,
-  mutationHandler,
+  graphQLHandler,
   subscribeHandler
 } = require('./message-handlers.js')
 
@@ -36,10 +35,8 @@ const sockpipeServer = sockpipe({
     }, 1000)
 
     return [
-      route(msg$, 'query', queryHandler),
-      route(msg$, 'mutation', mutationHandler),
+      route(msg$, 'graphql', graphQLHandler),
       route(msg$, 'subscribe', subscribeHandler(fakeEvent$)),
-      fakeEvent$.mapTo('test')
     ]
   })
   .on('connect', () => console.log('[SockPipe] A client has connected'))

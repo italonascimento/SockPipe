@@ -72,7 +72,7 @@ function createSocket() {
     socket.onopen = function (event) {
         socket.send(JSON.stringify({
             type: 'accept',
-            data: ['subscribe']
+            data: ['query']
         }));
         socket.send(JSON.stringify({
             type: 'query',
