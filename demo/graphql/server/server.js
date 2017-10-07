@@ -2,18 +2,19 @@ const http = require('http')
 const fs = require('fs')
 const path = require('path')
 const { Subject } = require('rxjs')
-const { sockpipe } = require('../../dist/sockpipe')
+const serveStatic = require('serve-static')
+const finalhandler = require('finalhandler')
+const { sockpipe } = require('../../../dist/sockpipe')
 const {
   queryHandler,
   mutationHandler,
   subscribeHandler
 } = require('./message-handlers.js')
 
-const index = fs.readFileSync(path.join(__dirname, 'index.html'))
+const serve = serveStatic(path.join(__dirname, '../client'), {'index': ['index.html']})
 
 const server = http.createServer((req, res) => {
-  res.writeHead(200, {'Content-Type': 'text/html'})
-  res.end(index)
+  serve(req, res, finalhandler(req, res))
 })
   .listen(8080)
 
@@ -37,7 +38,8 @@ const sockpipeServer = sockpipe({
     return [
       route(msg$, 'query', queryHandler),
       route(msg$, 'mutation', mutationHandler),
-      route(msg$, 'subscribe', subscribeHandler(fakeEvent$))
+      route(msg$, 'subscribe', subscribeHandler(fakeEvent$)),
+      fakeEvent$.mapTo('test')
     ]
   })
   .on('connect', () => console.log('[SockPipe] A client has connected'))
