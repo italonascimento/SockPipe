@@ -18,11 +18,25 @@ function createSocket() {
     socket.send(JSON.stringify({
       type: 'subscribe',
       data: `{
-        user(n: 1) {
+        users {
           name
         }
       }`
     }))
+
+    socket.send(JSON.stringify({
+      type: 'graphql',
+      data: `
+        mutation {
+          createUser( input: {
+            name: "Zach",
+            age: 21
+          }) {
+            name,
+            age
+          }
+        }
+    `}))
   }
 
   socket.onmessage = function(e) {
