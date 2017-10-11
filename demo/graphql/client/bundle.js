@@ -72,7 +72,7 @@ function createSocket() {
     socket.onopen = function (event) {
         socket.send(JSON.stringify({
             type: 'accept',
-            data: ['query']
+            data: ['graphql']
         }));
         socket.send(JSON.stringify({
             type: 'graphql',
@@ -85,10 +85,10 @@ function createSocket() {
         socket.send(JSON.stringify({
             type: 'subscribe',
             data: `{
-        users {
-          name
-        }
-      }`
+              users {
+                name
+              }
+            }`
         }));
         socket.send(JSON.stringify({
             type: 'graphql',
