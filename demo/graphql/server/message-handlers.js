@@ -1,6 +1,6 @@
 const { graphql } = require('graphql')
 const { Observable } = require('rxjs')
-const { schema, root } = require('./graphql')
+const { schema, root, update$ } = require('./graphql')
 
 function resolveQuery(query) {
   return Observable.fromPromise(graphql(schema, query, root))
@@ -16,17 +16,20 @@ module.exports = {
       }))
   },
 
-  subscribeHandler(updateStream$) {
-    return (msg$) =>
-      updateStream$
-        .withLatestFrom(
-          msg$,
-          (_, msg) => msg
-        )
-        .switchMap(resolveQuery)
-        .map(res => ({
-          type: 'subscribe',
-          data: res.data
-        }))
+  subscriptionHandler(msg$) {
+    return update$
+      .withLatestFrom(
+        msg$,
+        (update, msg) =>
+          msg.events.includes(update)
+            ? msg.query
+            : undefined
+      )
+      .filter(Boolean)
+      .switchMap(resolveQuery)
+      .map(res => ({
+        type: 'subscription',
+        data: res.data
+      }))
   },
 }

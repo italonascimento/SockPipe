@@ -1,5 +1,8 @@
 const { buildSchema } = require('graphql')
 const { users } = require('./db')
+const { Subject } = require('rxjs')
+
+const updateSubject = new Subject()
 
 module.exports = {
   schema: buildSchema(`
@@ -28,9 +31,11 @@ module.exports = {
     user: ({ n }) => users[n],
 
     createUser: ({ input }) => {
-      console.log(input)
       users.push(input)
+      updateSubject.next('createUser')
       return input
     }
-  }
+  },
+
+  update$: updateSubject.asObservable(),
 }

@@ -7,8 +7,9 @@ const finalhandler = require('finalhandler')
 const { sockpipe } = require('../../../dist/sockpipe')
 const {
   graphQLHandler,
-  subscribeHandler
+  subscriptionHandler
 } = require('./message-handlers.js')
+const { update$ } = require('./graphql')
 
 const serve = serveStatic(path.join(__dirname, '../client'), {'index': ['index.html']})
 
@@ -22,23 +23,10 @@ const sockpipeServer = sockpipe({
     httpServer: server,
     debug: false
   },
-  (msg$) => {
-    const fakeEvent$ = new Subject()
-
-    let i = 0
-    const interval = setInterval(() => {
-      if (i == 9) {
-        clearInterval(interval)
-      }
-      fakeEvent$.next()
-      i += 1
-    }, 1000)
-
-    return [
-      route(msg$, 'graphql', graphQLHandler),
-      route(msg$, 'subscribe', subscribeHandler(fakeEvent$)),
-    ]
-  })
+  (msg$) => [
+    route(msg$, 'graphql', graphQLHandler),
+    route(msg$, 'subscription', subscriptionHandler),
+  ])
   .on('connect', () => console.log('[SockPipe] A client has connected'))
   .on('close', () => console.log('[SockPipe] A client has left'))
 

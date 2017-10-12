@@ -21,6 +21,7 @@
   "homepage": "https://github.com/italonascimento/SockPipe#readme",
   "dependencies": {
     "graphql": "^0.11.3",
+    "graphql-subscriptions": "^0.5.4",
     "rx-node": "^1.0.2",
     "rxjs": "^5.4.3",
     "typescript": "^2.5.2",
