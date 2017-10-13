@@ -1,15 +1,14 @@
 const { graphql } = require('graphql')
 const { Observable } = require('rxjs')
-const { schema, root } = require('./graphql')
-
-function resolveQuery(query) {
-  return Observable.fromPromise(graphql(schema, query, root))
-}
 
 module.exports = {
-  graphQLHandler(msgData$) {
-    return msgData$
-      .switchMap(resolveQuery)
+  graphQLHandler(schema, root) {
+    const resolveQuery = (query) =>
+      Observable.fromPromise(graphql(schema, query, root))
+
+    return (msgData$) =>
+      msgData$
+        .switchMap(resolveQuery)
   },
 
   subscriptionHandler(update$, handle) {

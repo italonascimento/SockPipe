@@ -10,6 +10,7 @@ const {
   subscriptionHandler
 } = require('./message-handlers.js')
 const graphqlEvents$ = require('./graphql').events
+const { schema, root } = require('./graphql')
 
 const serve = serveStatic(path.join(__dirname, '../client'), {'index': ['index.html']})
 
@@ -25,9 +26,10 @@ const sockpipeServer = sockpipe({
   },
   (msg$) => {
     const route = createRouter(msg$)
+    const gqlHandler = graphQLHandler(schema, root)
 
     return [
-      route('graphql', graphQLHandler),
+      route('graphql', gqlHandler),
       route('subscription', subscriptionHandler(graphqlEvents$, graphQLHandler)),
     ]
   })
