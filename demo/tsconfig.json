@@ -19,10 +19,10 @@
     "target": "ES2016"
   },
   "include": [
-    "src/**/*"
+    "**/*"
   ],
   "exclude": [
-    "node_modules",
+    "**/node_modules",
     "**/*.spec.ts"
   ]
 }
