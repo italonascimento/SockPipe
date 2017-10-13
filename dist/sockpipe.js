@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const websocket_1 = require("websocket");
 const events_1 = require("events");
 const rxjs_1 = require("rxjs");
-function sockpipe(config, resolve) {
+function default_1(config, resolve) {
     const { httpServer, isOriginAllowed = () => true, debug = false, } = config;
     const emitter = new events_1.EventEmitter();
     const webSocketServer = new websocket_1.server({
@@ -26,7 +26,7 @@ function sockpipe(config, resolve) {
         .on('close', () => emitter.emit('close'));
     return emitter;
 }
-exports.sockpipe = sockpipe;
+exports.default = default_1;
 function createConnection(config) {
     const { socket, resolve, debug = false } = config;
     const inputSubject = new rxjs_1.Subject();
@@ -35,7 +35,7 @@ function createConnection(config) {
     const accept = [];
     const subscription = rxjs_1.Observable
         .merge(...output)
-        .filter(msg => msg.type && accept.includes(msg.type))
+        .filter(msg => !!msg.type && accept.includes(msg.type))
         .do((o) => {
         if (debug) {
             console.log('output:', o);

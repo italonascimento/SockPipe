@@ -4,7 +4,7 @@ const path = require('path')
 const { Subject } = require('rxjs')
 const serveStatic = require('serve-static')
 const finalhandler = require('finalhandler')
-const { sockpipe } = require('../../../dist/sockpipe')
+const { sockpipe, route } = require('../../../dist')
 const {
   graphQLHandler,
   subscriptionHandler
@@ -29,12 +29,3 @@ const sockpipeServer = sockpipe({
   ])
   .on('connect', () => console.log('[SockPipe] A client has connected'))
   .on('close', () => console.log('[SockPipe] A client has left'))
-
-
-function route(msg$, route, handle) {
-  return handle(
-    msg$
-    .filter(msg => msg.type === route)
-    .map(msg => msg.data)
-  )
-}

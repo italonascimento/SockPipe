@@ -3,7 +3,7 @@ import { EventEmitter } from 'events'
 import { Subject, Observable, Subscription } from 'rxjs'
 import * as http from 'http'
 
-type Resolver = (msg: Observable<string | Buffer>) => Observable<any>[]
+export type Resolver = (msg: Observable<Message>) => Observable<Message>[]
 
 export interface SockPipeConfig  {
   httpServer: http.Server
@@ -17,7 +17,12 @@ export interface ConnectionConfig {
   resolve: Resolver
 }
 
-export function sockpipe(config: SockPipeConfig, resolve: Resolver): EventEmitter {
+export interface Message{
+  type: string
+  data: any
+}
+
+export default function(config: SockPipeConfig, resolve: Resolver): EventEmitter {
   const {
     httpServer,
     isOriginAllowed = () => true,
@@ -52,14 +57,14 @@ export function sockpipe(config: SockPipeConfig, resolve: Resolver): EventEmitte
 function createConnection(config: ConnectionConfig){
   const { socket, resolve, debug = false } = config
 
-  const inputSubject: Subject<string | Buffer> = new Subject()
+  const inputSubject: Subject<Message> = new Subject()
   const input$ = inputSubject.asObservable()
   const output = resolve(input$)
   const accept: string[] = []
 
   const subscription = Observable
     .merge(...output)
-    .filter(msg => msg.type && accept.includes(msg.type))
+    .filter(msg => !!msg.type && accept.includes(msg.type))
     .do((o: any) => {
       if (debug) {
         console.log('output:', o)
@@ -72,7 +77,7 @@ function createConnection(config: ConnectionConfig){
     )
 
   socket.on('message', (message: IMessage) => {
-    const messageData =
+    const messageData: Message =
       (message.type === 'utf8' && message.utf8Data && JSON.parse(message.utf8Data))
       ||
       (message.type === 'binary' && message.binaryData && message.binaryData)

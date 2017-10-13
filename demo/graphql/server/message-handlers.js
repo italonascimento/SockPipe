@@ -7,19 +7,15 @@ function resolveQuery(query) {
 }
 
 module.exports = {
-  graphQLHandler(msg$) {
-    return msg$
+  graphQLHandler(msgData$) {
+    return msgData$
       .switchMap(resolveQuery)
-      .map(res => ({
-        type: 'graphql',
-        data: res.data
-      }))
   },
 
-  subscriptionHandler(msg$) {
+  subscriptionHandler(msgData$) {
     return update$
       .withLatestFrom(
-        msg$,
+        msgData$,
         (update, msg) =>
           msg.events.includes(update)
             ? msg.query
@@ -27,9 +23,5 @@ module.exports = {
       )
       .filter(Boolean)
       .switchMap(resolveQuery)
-      .map(res => ({
-        type: 'subscription',
-        data: res.data
-      }))
   },
 }
