@@ -9,7 +9,7 @@ const {
   graphQLHandler,
   subscriptionHandler
 } = require('./message-handlers.js')
-const { update$ } = require('./graphql')
+const graphqlEvents$ = require('./graphql').events
 
 const serve = serveStatic(path.join(__dirname, '../client'), {'index': ['index.html']})
 
@@ -28,7 +28,7 @@ const sockpipeServer = sockpipe({
 
     return [
       route('graphql', graphQLHandler),
-      route('subscription', subscriptionHandler),
+      route('subscription', subscriptionHandler(graphqlEvents$, graphQLHandler)),
     ]
   })
   .on('connect', () => console.log('[SockPipe] A client has connected'))

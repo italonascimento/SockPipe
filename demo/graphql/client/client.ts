@@ -19,7 +19,7 @@ function createSocket() {
       type: 'subscription',
       data: {
         events: ['createUser'],
-        query: `{
+        payload: `{
           users {
             name
           }
