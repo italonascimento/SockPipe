@@ -2,6 +2,8 @@
 
 SockPipe is a Node.js framework for reactive backend programming.
 
+## Basic helloworld, echo and ping server
+
 ```js
 const http = require('http')
 const { sockpipe } = require('sockpipe')
@@ -13,26 +15,53 @@ const server = http.createServer((req, res) => {
 
 const sockpipeServer = sockpipe({
   httpServer: server,
-  debug: false
+  debug: true
 }, (msg$) => [
-  msg$.filter(msg => msg.type === 'TYPE_1')
+
+  // Any message of type 'greetings' will be responded
+  // with a 'Hello World'
+  msg$.filter(msg => msg.type === 'greetings')
     .mapTo({
-      type: 'TYPE_1',
-      data: 'Some static response for messages of type 1'
+      type: 'greetings',
+      data: 'Hello World'
     }),
 
-  msg$.filter(msg => msg.type === 'TYPE_2')
-    .map(msg => ({
-      type: 'TYPE_2',
-      data: `Some dynamic response for messages of type 2 with payload: ${msg.data}`
-    })),
+  // Any message of type 'echo' will be sent back
+  // exactly the same
+  msg$.filter(msg => msg.type === 'echo'),
 
+  // Each one second the server will send a message
+  // of type 'ping' to it's clients
   Observable.interval(1000)
     .mapTo({
-      type: 'TYPE_3',
-      data: 'Some annoying message which is sent to clients every second.'
+      type: 'ping',
     })
 ])
 .on('connect', () => console.log('[SockPipe] A client has connected'))
 .on('close', () => console.log('[SockPipe] A client has left'))
+```
+
+## Routing messages by type
+
+To simplify the rounting of messages by type, you may use the helper function
+`createRouter`:
+
+```js
+const http = require('http')
+const { sockpipe, createRouter } = require('sockpipe')
+
+const server = http.createServer((req, res) => {
+  serve(req, res, finalhandler(req, res))
+})
+.listen(8080)
+
+const sockpipeServer = sockpipe({
+  httpServer: server,
+}, (msg$) => [
+  const route = createRouter(msg$)
+
+  // The callback receives an Observable of the message 'data' alone
+  // and doesn't need to worry about returning the 'type' either.
+  route('greetings', msgData$ => msgData$.mapTo({ data: 'Hello World' }))
+])
 ```
