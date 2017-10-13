@@ -19,7 +19,7 @@ export interface ConnectionConfig {
 
 export interface Message{
   type: string
-  data: any
+  data?: any
 }
 
 export default function(config: SockPipeConfig, resolve: Resolver): EventEmitter {
