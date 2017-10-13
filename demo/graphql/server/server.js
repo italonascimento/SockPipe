@@ -4,11 +4,12 @@ const path = require('path')
 const { Subject } = require('rxjs')
 const serveStatic = require('serve-static')
 const finalhandler = require('finalhandler')
-const { sockpipe, createRouter } = require('../../../dist')
 const {
-  graphQLHandler,
-  subscriptionHandler
-} = require('./message-handlers.js')
+  sockpipe,
+  createRouter,
+  createGraphQLHandler,
+  createSubscriptionHandler,
+} = require('../../../dist')
 const graphqlEvents$ = require('./graphql').events
 const { schema, root } = require('./graphql')
 
@@ -26,11 +27,11 @@ const sockpipeServer = sockpipe({
   },
   (msg$) => {
     const route = createRouter(msg$)
-    const gqlHandler = graphQLHandler(schema, root)
+    const graphQLHandler = createGraphQLHandler(schema, root)
 
     return [
-      route('graphql', gqlHandler),
-      route('subscription', subscriptionHandler(graphqlEvents$, graphQLHandler)),
+      route('graphql', graphQLHandler),
+      route('subscription', createSubscriptionHandler(graphqlEvents$, graphQLHandler)),
     ]
   })
   .on('connect', () => console.log('[SockPipe] A client has connected'))
