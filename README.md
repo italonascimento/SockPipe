@@ -1,6 +1,7 @@
 # SockPipe
 
-SockPipe is a Node.js framework for reactive backend programming.
+SockPipe is a Node.js framework for development of websocket servers with use
+of reactive programming.
 
 ## Basic helloworld, echo and ping server
 
@@ -9,7 +10,9 @@ const http = require('http')
 const { sockpipe } = require('sockpipe')
 
 const server = http.createServer((req, res) => {
-  serve(req, res, finalhandler(req, res))
+  console.log('Received request for ' + request.url);
+  response.writeHead(404);
+  response.end();
 })
 .listen(8080)
 
