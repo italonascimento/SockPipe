@@ -1,0 +1,17 @@
+{
+  "name": "sockpipe-demo-basic",
+  "version": "0.0.1",
+  "description": "",
+  "main": "client.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Ítalo Nascimento",
+  "license": "MIT",
+  "dependencies": {
+    "finalhandler": "^1.1.0",
+    "rxjs": "^5.4.3",
+    "serve-static": "^1.13.1"
+  }
+}
