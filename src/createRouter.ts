@@ -10,8 +10,8 @@ export default function(msg$: Observable<Message>) {
       .filter(msg => msg.type === type)
       .map(msg => msg.data)
     )
-    .map(res => ({
-      ...res,
+    .map(data => ({
+      data,
       type,
     }))
   }
