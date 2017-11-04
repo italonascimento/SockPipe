@@ -3,7 +3,7 @@
 SockPipe is a Node.js framework for development of websocket servers with use
 of reactive programming.
 
-## Basic helloworld, echo and ping server
+### Basic helloworld, echo and ping server
 
 ```js
 const http = require('http')
@@ -44,7 +44,7 @@ const sockpipeServer = sockpipe({
 .on('close', () => console.log('[SockPipe] A client has left'))
 ```
 
-## Routing messages by type
+### Routing messages by type
 
 To simplify the rounting of messages by type, you may use the helper function
 `createRouter`:
@@ -65,6 +65,17 @@ const sockpipeServer = sockpipe({
 
   // The callback receives an Observable of the message 'data' alone
   // and doesn't need to worry about returning the 'type' either.
-  route('greetings', msgData$ => msgData$.mapTo({ data: 'Hello World' }))
+  route('greetings', greetingsHandler)
 ])
+
+function greetingsHandler(msgData$) {
+  return msgData$.mapTo({ data: 'Hello World' })
+}
 ```
+
+## Demos
+
+For more useful exemples, such as GraphQL and authentication, check the demos
+folder:
+
+https://github.com/italonascimento/SockPipe/tree/master/demo
