@@ -1,14 +1,13 @@
 # SockPipe + GraphQL
 
+This demo shows how to use SockPipe `createGraphQLHandler` to parse the
+payload of messages as GraphQL operations.
+
 To run the demo, follow the steps:
 
 1. Install dependencies
 
 `npm i`
-
-2. Compile client
-
-`npm run build`
 
 3. Run server
 
