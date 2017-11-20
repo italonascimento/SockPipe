@@ -14,25 +14,45 @@ const server = http.createServer((req, res) => {
 })
   .listen(8080)
 
-const allMessages$ = new Subject()
+
+const users = {
+  taken: true
+}
 
 const sockpipeServer = sockpipe({
     httpServer: server,
     debug: false
   },
   (msg$) => {
-    // Send all clients messages to a common pool
-    msg$.subscribe(v => allMessages$.next(v))
-
-    const route = createRouter(allMessages$.asObservable())
+    const route = createRouter(msg$)
 
     return [
-      route('message', messageHandler)
+      route('signin', signinHandler),
+      // route('message', messageHandler)
     ]
   })
   .on('connect', () => console.log('[SockPipe] A client has connected'))
   .on('close', () => console.log('[SockPipe] A client has left'))
 
-function messageHandler(msgData$) {
-  return msgData$.map(v => v.toString())
+function signinHandler(data$) {
+  return data$
+    .map(signin)
+}
+
+function signin(username) {
+  if (!users[username]) {
+    users[username] = true
+    return {
+      success: true
+    }
+  }
+
+  return {
+    success: false,
+    message: 'Username is already taken. Please choose another one.'
+  }
+}
+
+function messageHandler(data$) {
+
 }

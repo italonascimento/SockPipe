@@ -7,8 +7,8 @@ export default function(msg$: Observable<Message>) {
   return function(type: string, handle: Handler) {
     return handle(
       msg$
-      .filter(msg => msg.type === type)
-      .map(msg => msg.data)
+        .filter(msg => msg.type === type)
+        .map(msg => msg.data)
     )
     .map(data => ({
       data,

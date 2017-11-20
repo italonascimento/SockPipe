@@ -3,13 +3,29 @@
   <head>
     <meta charset="utf-8">
     <title>SockPipe - Basic Demo</title>
+
+    <style>
+      #chat-room {
+        display: none;
+      }
+    </style>
   </head>
   <body>
-    <div id="message-board"></div>
-    <form id="message-form">
-      <input type="text" id="message-box" placeholder="Type your message" />
-      <input type="submit" value="Send" />
-    </form>
+    <div id="signin">
+      <p id="signin-status"></p>
+      <form id="signin-form">
+        <input type="text" id="username" placeholder="Choose a username">
+        <input type="submit" value="Sign in" />
+      </form>
+    </div>
+
+    <div id="chat-room">
+      <div id="message-board"></div>
+      <form id="message-form">
+        <input type="text" id="message" placeholder="Type your message" />
+        <input type="submit" value="Send" />
+      </form>
+    </div>
 
     <script type="text/javascript" src="client.js"></script>
   </body>
