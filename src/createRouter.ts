@@ -5,14 +5,18 @@ export type Handler = (T: any) => Observable<Message>
 
 export default function(msg$: Observable<Message>) {
   return function(type: string, handle: Handler) {
-    return handle(
+    const result = handle(
       msg$
         .filter(msg => msg.type === type)
         .map(msg => msg.data)
     )
-    .map(data => ({
-      data,
-      type,
-    }))
+
+    if (result) {
+      return result
+        .map(data => ({
+          data,
+          type,
+        }))
+    }
   }
 }
