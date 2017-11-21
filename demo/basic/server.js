@@ -2,6 +2,7 @@ const http = require('http')
 const { Observable, Subject } = require('rxjs')
 const serveStatic = require('serve-static')
 const finalhandler = require('finalhandler')
+const uuid = require('uuid/v4')
 const {
   sockpipe,
   createRouter
@@ -15,9 +16,8 @@ const server = http.createServer((req, res) => {
   .listen(8080)
 
 
-const users = {
-  taken: true
-}
+const users = {}
+const tokens = {}
 
 const sockpipeServer = sockpipe({
     httpServer: server,
@@ -28,7 +28,7 @@ const sockpipeServer = sockpipe({
 
     return [
       route('signin', signinHandler),
-      // route('message', messageHandler)
+      route('message', messageHandler)
     ]
   })
   .on('connect', () => console.log('[SockPipe] A client has connected'))
@@ -40,19 +40,34 @@ function signinHandler(data$) {
 }
 
 function signin(username) {
-  if (!users[username]) {
-    users[username] = true
+  if (users[username]) {
     return {
-      success: true
+      success: false,
+      message: 'Username is already taken. Please choose another one.'
     }
   }
 
+  const token = uuid()
+  users[token] = username
+  tokens[username] = token
+
   return {
-    success: false,
-    message: 'Username is already taken. Please choose another one.'
+    success: true,
+    token: token
   }
 }
 
-function messageHandler(data$) {
+const messages$ = new Subject()
 
+function messageHandler(data$) {
+  data$
+    .map(data => ({
+      message: data.message,
+      username: users[data.token],
+      datetime: data.datetime
+    }))
+    .filter(data => data.message && data.username && data.datetime)
+    .subscribe(messages$)
+
+  return messages$
 }
