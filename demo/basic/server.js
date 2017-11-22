@@ -48,12 +48,17 @@ function signin(username) {
   }
 
   const token = uuid()
-  users[token] = username
+  const userID = uuid()
+  users[token] = {
+    id: userID,
+    username: username,
+  }
   tokens[username] = token
 
   return {
     success: true,
-    token: token
+    token: token,
+    userID: userID
   }
 }
 
@@ -66,7 +71,14 @@ function messageHandler(data$) {
       username: users[data.token],
       datetime: data.datetime
     }))
-    .filter(data => data.message && data.username && data.datetime)
+    .filter(data => data.message && data.token)
+    .filter(data => users[data.token])
+    .map(data => ({
+      message: data.message,
+      userID: users[data.token].id,
+      username: users[data.token].username,
+      datetime: new Date()
+    }))
     .subscribe(messages$)
 
   return messages$

@@ -5,6 +5,7 @@ const messageForm = document.getElementById('message-form')
 
 let signinTimeout
 let token
+let userID
 
 const socket = new WebSocket("ws://localhost:8080", "echo-protocol")
 socket.onopen = function(e) {
@@ -25,6 +26,7 @@ socket.onmessage = function(e) {
 
     if (res.data.success) {
       token = res.data.token
+      userID = res.data.userID
       goToChatRoom()
     } else {
       showSigninError(res.data.message)
@@ -81,8 +83,13 @@ function goToChatRoom() {
 
 function showNewMessage(msg) {
   const newMessage = document.createElement('div')
+  
+  const author = msg.userID === userID
+    ? 'me'
+    : msg.username
+    
   newMessage.className = 'message'
-  newMessage.textContent = `${msg.username}: ${msg.message}`
+  newMessage.innerHTML = `<b>${author}:</b> ${msg.message}`
   messageBoard.append(newMessage)
 }
 
@@ -91,7 +98,6 @@ function sendMessage(msg) {
     type: 'message',
     data: {
       message: msg,
-      datetime: new Date(),
       token: token
     }
   }))
