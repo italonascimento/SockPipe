@@ -11,7 +11,7 @@ const socket = new WebSocket("ws://localhost:8080", "echo-protocol")
 socket.onopen = function(e) {
   socket.send(JSON.stringify({
     type: 'accept',
-    data: ['message', 'signin']
+    data: ['message', 'signin', 'alert']
   }))
 
   start()
@@ -35,6 +35,10 @@ socket.onmessage = function(e) {
 
     case 'message':
     showNewMessage(res.data)
+    break
+
+    case 'alert':
+    showNewAlert(res.data)
     break
   }
 }
@@ -83,13 +87,20 @@ function goToChatRoom() {
 
 function showNewMessage(msg) {
   const newMessage = document.createElement('div')
-  
+
   const author = msg.userID === userID
     ? 'me'
     : msg.username
-    
+
   newMessage.className = 'message'
   newMessage.innerHTML = `<b>${author}:</b> ${msg.message}`
+  messageBoard.append(newMessage)
+}
+
+function showNewAlert(msg) {
+  const newMessage = document.createElement('div')
+  newMessage.className = 'message'
+  newMessage.innerHTML = msg
   messageBoard.append(newMessage)
 }
 

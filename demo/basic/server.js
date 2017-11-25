@@ -3,6 +3,7 @@ const { Observable, Subject } = require('rxjs')
 const serveStatic = require('serve-static')
 const finalhandler = require('finalhandler')
 const uuid = require('uuid/v4')
+const _ = require('lodash')
 const {
   sockpipe,
   createRouter
@@ -18,59 +19,88 @@ const server = http.createServer((req, res) => {
 
 const users = {}
 const tokens = {}
+const sockets = {}
+
+const messages$ = new Subject()
+const alertMessages$ = new Subject()
 
 const sockpipeServer = sockpipe({
     httpServer: server,
     debug: false
   },
   (msg$) => {
+    const socketID = uuid()
+    sockets[socketID] = msg$
+
+    msg$.finally(connectionCloseHandler(socketID))
+      .subscribe(_.identity)
+
     const route = createRouter(msg$)
 
     return [
-      route('signin', signinHandler),
-      route('message', messageHandler)
+      route('signin', signinHandler(socketID)),
+      route('message', messageHandler),
+      alertMessages$.map(alert => ({
+        type: 'alert',
+        data: alert,
+      })),
     ]
   })
   .on('connect', () => console.log('[SockPipe] A client has connected'))
   .on('close', () => console.log('[SockPipe] A client has left'))
 
-function signinHandler(data$) {
-  return data$
-    .map(signin)
-}
+function connectionCloseHandler(socketID) {
+  return function() {
+    const token = _.findKey(users, (user) => user.socketID === socketID)
+    if (token) {
+      const username = users[token].username
+      users[token] = undefined
+      tokens[username] = undefined
 
-function signin(username) {
-  if (users[username]) {
-    return {
-      success: false,
-      message: 'Username is already taken. Please choose another one.'
+      alertMessages$.next(`${username} left the room.`)
     }
   }
+}
 
-  const token = uuid()
-  const userID = uuid()
-  users[token] = {
-    id: userID,
-    username: username,
-  }
-  tokens[username] = token
-
-  return {
-    success: true,
-    token: token,
-    userID: userID
+function signinHandler(socketID) {
+  return function signinHandler(data$) {
+    return data$
+    .map(signin(socketID))
   }
 }
 
-const messages$ = new Subject()
+function signin(socketID) {
+  return function (username) {
+    if (tokens[username]) {
+      return {
+        success: false,
+        message: 'Username is already taken. Please choose another one.'
+      }
+    }
+
+    const token = uuid()
+    const userID = uuid()
+    users[token] = {
+      id: userID,
+      username: username,
+      socketID: socketID,
+    }
+
+    tokens[username] = token
+
+    alertMessages$.next(`${username} entered the room.`)
+
+    return {
+      success: true,
+      token: token,
+      userID: userID
+    }
+  }
+}
+
 
 function messageHandler(data$) {
   data$
-    .map(data => ({
-      message: data.message,
-      username: users[data.token],
-      datetime: data.datetime
-    }))
     .filter(data => data.message && data.token)
     .filter(data => users[data.token])
     .map(data => ({
