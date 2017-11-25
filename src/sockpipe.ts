@@ -95,5 +95,8 @@ function createConnection(config: ConnectionConfig){
     }
   })
 
-  socket.on('close', () => subscription.unsubscribe())
+  socket.on('close', () => {
+    inputSubject.complete()
+    subscription.unsubscribe()
+  })
 }
