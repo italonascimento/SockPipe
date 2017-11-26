@@ -1,7 +1,8 @@
 const http = require('http')
-const { Observable, Subject } = require('rxjs')
+const path = require('path')
 const serveStatic = require('serve-static')
 const finalhandler = require('finalhandler')
+const { Observable, Subject } = require('rxjs')
 const uuid = require('uuid/v4')
 const _ = require('lodash')
 const {
@@ -9,7 +10,7 @@ const {
   createRouter
 } = require('../../dist')
 
-const serve = serveStatic(__dirname, { index: ['client.html'] })
+const serve = serveStatic(path.join(__dirname, 'client'), { index: ['index.html'] })
 
 const server = http.createServer((req, res) => {
   serve(req, res, finalhandler(req, res))
