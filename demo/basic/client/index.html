@@ -5,26 +5,102 @@
     <title>SockPipe - Basic Demo</title>
 
     <style>
+      html {
+        font-family: sans-serif;
+        font-size: 14px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      input {
+        height: 40px;
+      }
+
+      input[type="text"] {
+        padding: 16px;
+      }
+
+      input[type="submit"] {
+        border: none;
+        background-color: rgb(135, 190, 208);
+        color: white;
+        cursor: pointer;
+        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+      }
+
+      #app {
+        max-width: 800px;
+        margin: 60px auto;
+      }
+
+      #signin {
+        max-width: 250px;
+        margin: 0 auto;
+      }
+
+      #signin input {
+        width: 100%;
+        display: block;
+      }
+
+      #signin input[type="submit"] {
+        margin-top: 8px;
+      }
+
       #chat-room {
         display: none;
+      }
+
+      #message-board {
+        border: 1px solid #ccc;
+        padding: 8px;
+        height: 250px;
+        overflow-y: scroll;
+      }
+
+      .message {
+        padding: 4px 8px;
+      }
+
+      .alert {
+        color: #666;
+      }
+
+      #message-form {
+        display: flex;
+        flex-direction: row;
+        margin-top: 16px;
+      }
+
+      #message-form input {
+        flex: 1;
+      }
+
+      #message-form input[type="submit"] {
+        flex: 0 0 80px;
+        margin-left: 8px;
       }
     </style>
   </head>
   <body>
-    <div id="signin">
-      <p id="signin-status"></p>
-      <form id="signin-form">
-        <input type="text" id="username" placeholder="Choose a username">
-        <input type="submit" value="Sign in" />
-      </form>
-    </div>
+    <div id="app">
+      <div id="signin">
+        <p id="signin-status"></p>
+        <form id="signin-form">
+          <input type="text" id="username" placeholder="Choose a username">
+          <input type="submit" value="Sign in" />
+        </form>
+      </div>
 
-    <div id="chat-room">
-      <div id="message-board"></div>
-      <form id="message-form">
-        <input type="text" id="message" placeholder="Type your message" />
-        <input type="submit" value="Send" />
-      </form>
+      <div id="chat-room">
+        <div id="message-board"></div>
+        <form id="message-form">
+          <input type="text" id="message" placeholder="Type your message" />
+          <input type="submit" value="Send" />
+        </form>
+      </div>
     </div>
 
     <script type="text/javascript" src="client.js"></script>

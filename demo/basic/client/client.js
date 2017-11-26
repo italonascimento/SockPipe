@@ -117,7 +117,7 @@ const ui = {
 
   newAlert(msg) {
     const newMessage = document.createElement('div')
-    newMessage.className = 'message'
+    newMessage.className = 'message alert'
     newMessage.innerHTML = `<i>${msg}</i>`
     messageBoard.append(newMessage)
   }
