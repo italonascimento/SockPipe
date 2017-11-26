@@ -82,7 +82,7 @@ const ui = {
     signinStatus.textContent = ''
 
     signinTimeout = setTimeout(function () {
-      this.signinError()
+      ui.signinError()
     }, 5000)
   },
 
