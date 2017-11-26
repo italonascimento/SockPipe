@@ -57,7 +57,7 @@ signinForm.addEventListener('submit', e => {
 messageForm.addEventListener('submit', e => {
   e.preventDefault()
   const { message: {value} } = e.target.elements
-  socket.send(buildChatMessage(value))
+  socket.send(buildChatMessage(value, token))
   message.value = ''
 })
 
