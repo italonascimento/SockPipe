@@ -102,7 +102,7 @@ const messageHandler = (socketID) =>
         username: users[socketID].username,
         datetime: new Date()
       }))
-      .subscribe(messages$)
+      .subscribe((data) => messages$.next(data))
 
     return messages$
   }
