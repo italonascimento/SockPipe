@@ -49,13 +49,11 @@ const sockpipeServer = sockpipe({
 
 function connectionCloseHandler(socketID) {
   return function() {
-    const token = _.findKey(users, (user) => user.socketID === socketID)
-    if (token) {
-      const username = users[token].username
-      delete users[token]
-      delete tokens[username]
+    const user = users[socketID]
+    if (user) {
+      alertMessages$.next(`${user.username} left the room.`)
 
-      alertMessages$.next(`${username} left the room.`)
+      delete users[socketID]
     }
   }
 }
