@@ -19,9 +19,6 @@ const server = http.createServer((req, res) => {
 
 
 const users = {}
-const tokens = {}
-const sockets = {}
-
 const messages$ = new Subject()
 const alertMessages$ = new Subject()
 
@@ -31,7 +28,7 @@ const sockpipeServer = sockpipe({
   },
   (msg$) => {
     const socketID = uuid()
-    sockets[socketID] = msg$
+    users[socketID] = {}
 
     msg$.finally(connectionCloseHandler(socketID))
       .subscribe(_.identity)
@@ -40,7 +37,7 @@ const sockpipeServer = sockpipe({
 
     return [
       route('signin', signinHandler(socketID)),
-      route('message', messageHandler),
+      route('message', messageHandler(socketID)),
       alertMessages$.map(alert => ({
         type: 'alert',
         data: alert,
@@ -55,24 +52,21 @@ function connectionCloseHandler(socketID) {
     const token = _.findKey(users, (user) => user.socketID === socketID)
     if (token) {
       const username = users[token].username
-      users[token] = undefined
-      tokens[username] = undefined
+      delete users[token]
+      delete tokens[username]
 
       alertMessages$.next(`${username} left the room.`)
     }
   }
 }
 
-function signinHandler(socketID) {
-  return function signinHandler(data$) {
-    return data$
+const signinHandler = (socketID) =>
+  (data$) => data$
     .map(signin(socketID))
-  }
-}
 
-function signin(socketID) {
-  return function (username) {
-    if (tokens[username]) {
+const signin = (socketID) =>
+  (username) => {
+    if (isUsernameAlreadyTaken(username)) {
       return {
         success: false,
         message: 'Username is already taken. Please choose another one.'
@@ -81,13 +75,11 @@ function signin(socketID) {
 
     const token = uuid()
     const userID = uuid()
-    users[token] = {
-      id: userID,
+    users[socketID] = {
+      userID: userID,
       username: username,
-      socketID: socketID,
+      token: token,
     }
-
-    tokens[username] = token
 
     alertMessages$.next(`${username} entered the room.`)
 
@@ -97,20 +89,22 @@ function signin(socketID) {
       userID: userID
     }
   }
-}
 
+const isUsernameAlreadyTaken = (username) =>
+  _.some(users, {username: username})
 
-function messageHandler(data$) {
-  data$
-    .filter(data => data.message && data.token)
-    .filter(data => users[data.token])
-    .map(data => ({
-      message: data.message,
-      userID: users[data.token].id,
-      username: users[data.token].username,
-      datetime: new Date()
-    }))
-    .subscribe(messages$)
+const messageHandler = (socketID) =>
+ (data$) => {
+    data$
+      .filter(data => data.message && data.token)
+      .filter(data => data.token === users[socketID].token)
+      .map(data => ({
+        message: data.message,
+        userID: users[socketID].userID,
+        username: users[socketID].username,
+        datetime: new Date()
+      }))
+      .subscribe(messages$)
 
-  return messages$
-}
+    return messages$
+  }
